@@ -2,6 +2,8 @@
 
 ## 安装星云链
 
+* [Nebulas 101 - 01 编译安装星云链](https://github.com/nebulasio/wiki/blob/master/tutorials/%5B%E4%B8%AD%E6%96%87%5D%20Nebulas%20101%20-%2001%20%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85.md)
+
 ### 安装GIT
 
 ```
