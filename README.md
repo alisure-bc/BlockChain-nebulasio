@@ -1,10 +1,10 @@
 # BlockChain-nebulasio
 
-## 安装星云链
+# 安装星云链
 
 * [Nebulas 101 - 01 编译安装星云链](https://github.com/nebulasio/wiki/blob/master/tutorials/%5B%E4%B8%AD%E6%96%87%5D%20Nebulas%20101%20-%2001%20%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85.md)
 
-### 安装GIT
+## 安装GIT
 
 ```
 sudo apt-get update
@@ -14,7 +14,7 @@ sudo apt-get install git
 If have question about `apt-get update`,you can try ....
 
 
-### 安装GO
+## 安装GO
 
 ```
 export PATH=$PATH:/usr/local/go/bin
@@ -56,4 +56,158 @@ ldconfig
 * [https://github.com/nebulasio/wiki/blob/master/tutorials](https://github.com/nebulasio/wiki/blob/master/tutorials)
 
 * [shared libraries error](https://blog.csdn.net/yjk13703623757/article/details/53217377)
+
+
+# 在星云链上发送交易
+
+* [Nebulas 101 - 02 在星云链上发送交易](https://github.com/nebulasio/wiki/blob/master/tutorials/%5B%E4%B8%AD%E6%96%87%5D%20Nebulas%20101%20-%2002%20%E5%8F%91%E9%80%81%E4%BA%A4%E6%98%93.md)
+
+## 接受者账户
+
+```
+cd ~/alisure/gopath/src/github.com/nebulasio/go-nebulas
+sudo ./neb account new
+123
+123
+# Address: n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk
+```
+
+## 启动私有链
+
+```
+# 启动种子节点
+sudo ./neb -c conf/default/config.conf
+
+# 启动矿工节点
+sudo ./neb -c conf/example/miner.conf
+```
+
+## 检查账户状态
+
+```
+# 检查账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+# 如我们所见，发送者账户在预分配后拥有5000000000000000000000000(5 * 10^24)个代币，
+# 1个NAS是1000000000000000000（10^18）个代币，用于支付交易上链的手续费绰绰有余。
+# {"result":{"balance":"5000000000000000000000000","nonce":"0","type":87}}
+
+
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+# {"result":{"balance":"0","nonce":"0","type":87}}
+```
+
+## 发送交易
+
+### 签名 & 发送
+
+> 使用这种方式，我们可以在离线环境下先使用私钥签名好交易，然后把签好名的交易在联网的机器上发出。
+
+```
+# 给准备发的交易签名，得到交易的二进制数据
+curl -i -H 'Content-Type: application/json' -X POST http://localhost:8685/v1/admin/sign -d '{"transaction":{"from":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE","to":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk", "value":"1000000000000000000","nonce":1,"gasPrice":"1000000","gasLimit":"2000000"}, "passphrase":"passphrase"}'
+# 签好名的交易原始数据
+# {"result":{"data":"CiDtn9KF+EgpscLsvbyzrnORgfEjfMWEZprEL7ZJ1QG9iRIaGVcH+WT/SVMkY18ix7SG4F1+Z8evXJoA35caGhlXEZMepFglLKNVwuOYpU1JMdVHMr2UKz2nIhAAAAAAAAAAAA3gtrOnZAAAKAEwnNLl1wU6CAoGYmluYXJ5QGRKEAAAAAAAAAAAAAAAAAAPQkBSEAAAAAAAAAAAAAAAAAAehIBYAWJBxh0ZaenDMdUN9nGTBj19f5cVh8MFI08jS2DpDS3wVuo+ZH44HBAl/htxHlVnURUPyWe0qnkbx3Hek66yRxICWAE="}}
+
+
+# 将签好名的交易原始数据提交到本地私有链里的星云节点
+curl -i -H 'Content-Type: application/json' -X POST http://localhost:8685/v1/user/rawtransaction -d '{"data":"CiDtn9KF+EgpscLsvbyzrnORgfEjfMWEZprEL7ZJ1QG9iRIaGVcH+WT/SVMkY18ix7SG4F1+Z8evXJoA35caGhlXEZMepFglLKNVwuOYpU1JMdVHMr2UKz2nIhAAAAAAAAAAAA3gtrOnZAAAKAEwnNLl1wU6CAoGYmluYXJ5QGRKEAAAAAAAAAAAAAAAAAAPQkBSEAAAAAAAAAAAAAAAAAAehIBYAWJBxh0ZaenDMdUN9nGTBj19f5cVh8MFI08jS2DpDS3wVuo+ZH44HBAl/htxHlVnURUPyWe0qnkbx3Hek66yRxICWAE="}'
+# {"result":{"txhash":"ed9fd285f84829b1c2ecbdbcb3ae739181f1237cc584669ac42fb649d501bd89","contract_address":""}}
+
+
+# 检查发送者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+# 每个交易如果需要上链，都需要给矿工缴纳一部分手续费，所以发送者账户中需要有一部分钱才能成功发送交易。
+# 一般一个普通转账交易，手续费在0.000000002NAS左右，非常少。
+# {"result":{"balance":"4999998999999980000000000","nonce":"0","type":87}}
+
+
+# 检查接受者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+# {"result":{"balance":"1000000000000000000","nonce":"0","type":87}}
+```
+
+### 密码 & 发送
+
+> 如果你信任一个星云节点帮你保存keystore文件，你可以使用第二种方法发送交易。
+
+```
+# 上传你的keystore文件到你信任的星云节点的keydir文件夹下
+cp /path/to/keystore.json /path/to/keydir/
+
+
+# 发送交易的同时，带上keystore的密码
+curl -i -H 'Content-Type: application/json' -X POST http://localhost:8685/v1/admin/transactionWithPassphrase -d '{"transaction":{"from":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE","to":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk", "value":"1000000000000000000","nonce":2,"gasPrice":"1000000","gasLimit":"2000000"},"passphrase":"passphrase"}'
+# Nonce用于标记账户发起的所有交易的顺序。同一个账户，每发起一个新的交易，Nonce就加一，初始为0，第一个交易的Nonce为1。
+# 在发送交易时，对于同一个账户，只有当他Nonce为N的交易上链后，Nonce为N+1的交易才能上链，有严格的顺序，Nonce必须严格加1。
+# 因为我们在之前使用n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE发送了一个Nonce为1的交易，所以这里新的交易的Nonce应该增加1，变成2再提交。
+# {"result":{"txhash":"4405070b9e0a33268b8caa4eb9b18a7973dea27165516e430c5077697700028d","contract_address":""}}
+
+
+# 检查发送者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+# {"result":{"balance":"4999997999999960000000000","nonce":"2","type":87}}
+
+
+# 检查接受者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+# {"result":{"balance":"2000000000000000000","nonce":"0","type":87}}
+```
+
+
+### 解锁 & 发送
+
+> 这是最危险的发送交易的方法。除非你完全信任一个星云节点，否则不要使用这种方法来发送交易。
+
+```
+# 上传你的keystore文件到你信任的星云节点的keydir文件夹下
+cp /path/to/keystore.json /path/to/keydir/
+
+
+# 使用你的keystore文件的密码，在指定的时间范围来在被信任的节点上使用Unlock接口解锁账户。
+curl -i -H 'Content-Type: application/json' -X POST http://localhost:8685/v1/admin/account/unlock -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE","passphrase":"passphrase","duration":"300000000000"}'
+# {"result":{"result":true}}
+
+
+# 一旦一个账户在节点上被解锁，任何可以访问该机器SendTransaction接口的人，都可以直接使用该账户的身份发送交易。
+curl -i -H 'Content-Type: application/json' -X POST http://localhost:8685/v1/admin/transaction -d '{"from":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE","to":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk", "value":"1000000000000000000","nonce":3,"gasPrice":"1000000","gasLimit":"2000000"}'
+# {"result":{"txhash":"1976fb8091a6d63a6b7fdc2e13c108418825f68db7103ce1dcdfb6544d840562","contract_address":""}}
+
+
+# 检查发送者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+# {"result":{"balance":"4999996999999940000000000","nonce":"2","type":87}}
+
+
+# 检查接受者账户状态
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+# {"result":{"balance":"3000000000000000000","nonce":"0","type":87}}
+```
+
+## 交易收据
+
+> 不论使用的哪一种方法发送交易，我们都会得到两个返回值，txhash和contract_address。其中txhash为交易hash，是一个交易的唯一标识。如果当前交易是一个部署合约的交易，contract_address将会是合约地址，调用合约时都会使用这个地址，是合约的唯一标识。
+
+```
+# 使用txhash我们可以查看交易收据，知道当前交易的状态。
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/getTransactionReceipt -d '{"hash":"1976fb8091a6d63a6b7fdc2e13c108418825f68db7103ce1dcdfb6544d840562"}'
+# 这里的status可能有三种状态值，0，1和2。
+#    0: 交易失败. 表示当前交易已经上链，但是执行失败了。可能是因为部署合约或者调用合约参数错误。
+#    1: 交易成功. 表示当前交易已经上链，而且执行成功了。
+#    2: 交易待定. 表示当前交易还没有上链。可能是因为当前交易还没有被打包；如果长时间处于当前状态，可能是因为当前交易的发送者账户的余额不够支付上链手续费。
+# {"result":{"hash":"1976fb8091a6d63a6b7fdc2e13c108418825f68db7103ce1dcdfb6544d840562","chainId":100,"from":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE","to":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk","value":"1000000000000000000","nonce":"3","timestamp":"1526296116","type":"binary","data":null,"gas_price":"1000000","gas_limit":"2000000","contract_address":"","status":1,"gas_used":"20000","execute_error":"","execute_result":""}}
+
+```
+
+## 复查账户余额
+```
+# 矿工(coinbase)
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1XkoVVjswb5Gek3rRufqjKNpwrDdsnQ7Hq"}'
+
+# 发送者
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+
+# 接受者
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+```
+
 
