@@ -202,12 +202,15 @@ curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/getTran
 ```
 # 矿工(coinbase)
 curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1XkoVVjswb5Gek3rRufqjKNpwrDdsnQ7Hq"}'
+# {"result":{"balance":"5000021404100060000000000","nonce":"0","type":87}}
 
 # 发送者
-curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1FF1nz6tarkDVwWQkMnnwFPuPKUaQTdptE"}'
+curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d {"result":{"balance":"4999996999999940000000000","nonce":"3","type":87}}
+# {"result":{"balance":"4999996999999940000000000","nonce":"3","type":87}}
 
 # 接受者
 curl -i -H Accept:application/json -X POST http://localhost:8685/v1/user/accountstate -d '{"address":"n1G7n2ixTNC9VjzQSk4VRe1jqBAJoiwSZKk"}'
+# {"result":{"balance":"3000000000000000000","nonce":"0","type":87}}
 ```
 
 
