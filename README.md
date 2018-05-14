@@ -55,5 +55,5 @@ ldconfig
 
 * [https://github.com/nebulasio/wiki/blob/master/tutorials](https://github.com/nebulasio/wiki/blob/master/tutorials)
 
-* [](https://blog.csdn.net/yjk13703623757/article/details/53217377)
+* [shared libraries error](https://blog.csdn.net/yjk13703623757/article/details/53217377)
 
