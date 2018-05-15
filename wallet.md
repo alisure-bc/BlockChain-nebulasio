@@ -12,3 +12,7 @@ git clone https://github.com/nebulasio/web-wallet.git
 
 click index.html and input passward,save wallet.
 
+## look
+
+file:///home/hp/alisure/web-wallet/index.html
+
